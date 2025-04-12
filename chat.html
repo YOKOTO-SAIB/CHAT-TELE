@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Telegram Message Sender</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 400px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    input, textarea, button {
+      width: 100%;
+      margin: 10px 0;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      background-color: #0088cc;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0077b3;
+    }
+    ul {
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Kirim Pesan ke Telegram YOKOTO</h2>
+    <input type="text" id="name" placeholder="Nama kamu">
+    <textarea id="message" placeholder="Tulis pesanmu..."></textarea>
+    <button onclick="sendMessage()">Kirim</button>
+    <p id="status"></p>
+  </div>
+
+  <div class="container" style="margin-top: 20px;">
+    <h3>Pesan Terbaru dari Telegram (auto refresh)</h3>
+    <ul id="messageList"></ul>
+  </div>
+
+  <script>
+    const telegramBotToken = '7957014781:AAFLZYCPTJAjEhzZ_37E-WxC3JcLkSOIWmA';
+    const chatId = '7016045840';
+
+    function sendMessage() {
+      const name = document.getElementById('name').value.trim();
+      const message = document.getElementById('message').value.trim();
+
+      if (!name || !message) {
+        document.getElementById('status').innerText = 'Isi semua field!';
+        return;
+      }
+
+      const finalMessage = `Pesan dari: ${name}\n\n${message}`;
+      const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(finalMessage)}`;
+
+      fetch(url)
+        .then(response => {
+          if (response.ok) {
+            document.getElementById('status').innerText = 'Pesan terkirim!';
+            document.getElementById('name').value = '';
+            document.getElementById('message').value = '';
+          } else {
+            document.getElementById('status').innerText = 'Gagal mengirim pesan.';
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          document.getElementById('status').innerText = 'Terjadi kesalahan.';
+        });
+    }
+
+    function getMessages() {
+      const url = `https://api.telegram.org/bot${telegramBotToken}/getUpdates`;
+
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          const messages = data.result;
+          const list = document.getElementById('messageList');
+          list.innerHTML = '';
+
+          messages.slice(-5).forEach(update => {
+            if (update.message && update.message.text) {
+              const name = update.message.from.first_name || 'Tidak diketahui';
+              const text = update.message.text;
+              const li = document.createElement('li');
+              li.textContent = `${name}: ${text}`;
+              list.appendChild(li);
+            }
+          });
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          document.getElementById('messageList').innerText = 'Gagal mengambil pesan.';
+        });
+    }
+
+   
+    setInterval(getMessages, 5000);
+    window.onload = getMessages;
+  </script>
+
+</body>
+</html>
